@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 
-# Connect to SQLite database
+# Connecting to SQLite database
 conn = sqlite3.connect("D:/Redbus proj/Redbus.db")
 df = pd.read_sql('SELECT * FROM bus_routes', conn)
 
