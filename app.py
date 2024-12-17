@@ -46,8 +46,17 @@ if star_rating_filter != (0.0, 5.0):
     df = df[(df['star_rating'] >= star_rating_filter[0]) & (df['star_rating'] <= star_rating_filter[1])]
 if price_filter != (0.0, float(df['price'].max())):
     df = df[(df['price'] >= price_filter[0]) & (df['price'] <= price_filter[1])]
-if seats_available_filter != (0, int(df['seats_available'].max())):
-    df = df[(df['seats_available'] >= seats_available_filter[0]) & (df['seats_available'] <= seats_available_filter[1])]
+#Ensure NaN values are handled correctly for max calculation
+max_seats = df['seats_available'].max(skipna=True)  # Ignores NaN values by default
+
+#Handle case where max_seats might be NaN
+if pd.isna(max_seats):  # Check if the max value is NaN
+    max_seats = 0  # Replace NaN with a default value, like 0
+
+# Now use max_seats for the filter
+if seats_available_filter != (0, int(max_seats)):  # Use the max_seats safely
+    df = df[(df['seats_available'] >= seats_available_filter[0]) & 
+            (df['seats_available'] <= seats_available_filter[1])]
 
 # Display data
 st.write(df)
