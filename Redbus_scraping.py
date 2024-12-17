@@ -103,6 +103,10 @@ def redbus_data_scraping():
         reaching_time = driver.find_element(By.XPATH, "(//div[contains(@class,'bp-time')])["+str(i)+"]").text
         reaching_loc = driver.find_element(By.XPATH, "(//div[contains(@class,'bp-loc')])["+str(i)+"]").text
         star_rating = driver.find_element(By.XPATH, "(//div[contains(@class,'rating-sec')]//span)["+str(i)+"]").text
+        try:
+            star_rating = driver.find_element(By.XPATH, "(//div[contains(@class,'rating-sec')]//span)[" + str(i) + "]").text
+        except NoSuchElementException:
+            star_rating = "No rating"
         price =  driver.find_element(By.XPATH, "(//div[contains(@class,'fare')]//span)["+str(i)+"]").text
         seats_available = driver.find_element(By.XPATH, "(//div[contains(@class,'seat-left')])["+str(i)+"]").text
         route_link = driver.current_url
