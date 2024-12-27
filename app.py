@@ -2,20 +2,10 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 
-# Connecting to SQLite database
+# Connect to SQLite database
 conn = sqlite3.connect("D:/Redbus proj/Redbus.db")
-df = pd.read_sql('SELECT * FROM bus_routes', conn)
 
-# Clean and convert the 'seats_available' column
-#df['seats_available'] = df['seats_available'].str.extract('(\d+)').astype(float)
-df['seats_available'] = df['seats_available'].str.extract(r'(\d+)').astype(float)
-
-
-# Convert other columns to appropriate data types
-df['star_rating'] = pd.to_numeric(df['star_rating'], errors='coerce')
-df['price'] = pd.to_numeric(df['price'], errors='coerce')
-
-# Streamlit app
+# Streamlit app title
 st.title('Redbus Data Filtering')
 
 # Sidebar for filters
@@ -26,39 +16,37 @@ departing_time_filter = st.sidebar.text_input('Departing Time')
 duration_filter = st.sidebar.text_input('Duration')
 reaching_time_filter = st.sidebar.text_input('Reaching Time')
 star_rating_filter = st.sidebar.slider('Rating', 0.0, 5.0, (0.0, 5.0), step=0.1)
-price_filter = st.sidebar.slider('Price', 0.0, float(df['price'].max()), (0.0, float(df['price'].max())))
-seats_available_filter = st.sidebar.slider('Seats Available', 0, int(df['seats_available'].max()), (0, int(df['seats_available'].max())))
+price_filter = st.sidebar.slider('Price', 0.0, 1000.0, (0.0, 1000.0))
+seats_available_filter = st.sidebar.slider('Seats Available', 0, 100, (0, 100))
 
-# Apply filters
+# Base SQL query for filtering
+query = "SELECT * FROM bus_routes WHERE 1=1"  # Start with a condition that always evaluates to True
+
+# Dynamically modify the SQL query based on user inputs
 if route_name_filter:
-    df = df[df['route_name'].str.contains(route_name_filter, case=False)]
+    query += f" AND route_name LIKE '%{route_name_filter}%'"
 if busname_filter:
-    df = df[df['busname'].str.contains(busname_filter, case=False)]
+    query += f" AND busname LIKE '%{busname_filter}%'"
 if bustype_filter:
-    df = df[df['bustype'].str.contains(bustype_filter, case=False)]
+    query += f" AND bustype LIKE '%{bustype_filter}%'"
 if departing_time_filter:
-    df = df[df['departing_time'].str.contains(departing_time_filter, case=False)]
+    query += f" AND departing_time LIKE '%{departing_time_filter}%'"
 if duration_filter:
-    df = df[df['duration'].str.contains(duration_filter, case=False)]
+    query += f" AND duration LIKE '%{duration_filter}%'"
 if reaching_time_filter:
-    df = df[df['reaching_time'].str.contains(reaching_time_filter, case=False)]
-if star_rating_filter != (0.0, 5.0):
-    df = df[(df['star_rating'] >= star_rating_filter[0]) & (df['star_rating'] <= star_rating_filter[1])]
-if price_filter != (0.0, float(df['price'].max())):
-    df = df[(df['price'] >= price_filter[0]) & (df['price'] <= price_filter[1])]
-#Ensure NaN values are handled correctly for max calculation
-max_seats = df['seats_available'].max(skipna=True)  # Ignores NaN values by default
+    query += f" AND reaching_time LIKE '%{reaching_time_filter}%'"
+if star_rating_filter != (0.0, 5.0):  # Check if rating filter is applied
+    query += f" AND star_rating BETWEEN {star_rating_filter[0]} AND {star_rating_filter[1]}"
+if price_filter != (0.0, 1000.0):  # Check if price filter is applied
+    query += f" AND price BETWEEN {price_filter[0]} AND {price_filter[1]}"
+if seats_available_filter != (0, 100):  # Check if seats filter is applied
+    query += f" AND seats_available BETWEEN {seats_available_filter[0]} AND {seats_available_filter[1]}"
 
-#Handle case where max_seats might be NaN
-if pd.isna(max_seats):  # Check if the max value is NaN
-    max_seats = 0  # Replace NaN with a default value, like 0
+# Execute the SQL query
+df = pd.read_sql(query, conn)
 
-# Now use max_seats for the filter
-if seats_available_filter != (0, int(max_seats)):  # Use the max_seats safely
-    df = df[(df['seats_available'] >= seats_available_filter[0]) & 
-            (df['seats_available'] <= seats_available_filter[1])]
-
-# Display data
+# Display the filtered data in Streamlit
 st.write(df)
 
+# Close the database connection
 conn.close()
